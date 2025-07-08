@@ -1,4 +1,5 @@
 const puppeteer = require('puppeteer');
+const fetch = require('node-fetch'); // Node 18+ 可用全局 fetch
 
 async function login(username, password) {
   console.log(`Attempting to login with username: ${username}`);
@@ -29,16 +30,45 @@ async function login(username, password) {
     const url = page.url();
     if (url.includes('clientarea.php')) {
       console.log(`✅ Successfully logged in as ${username}`);
+      await sendTelegramMessage(`✅ 登录成功: ${username}`);
     } else {
       console.log(`❌ Failed to login as ${username}`);
+      await sendTelegramMessage(`❌ 登录失败: ${username}`);
     }
     
     await page.screenshot({ path: `${username}-screenshot.png` });
     
   } catch (error) {
     console.error(`🚨 Error during login for ${username}:`, error);
+    await sendTelegramMessage(`🚨 登录异常: ${username}\n${error}`);
   } finally {
     await browser.close();
+  }
+}
+
+async function sendTelegramMessage(message) {
+  const token = process.env.TELEGRAM_BOT_TOKEN;
+  const chatId = process.env.TELEGRAM_CHAT_ID;
+  if (!token || !chatId) {
+    console.error('Telegram token or chat id not set');
+    return;
+  }
+  const url = `https://api.telegram.org/bot${token}/sendMessage`;
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: chatId,
+        text: message,
+        parse_mode: 'Markdown'
+      })
+    });
+    if (!res.ok) {
+      console.error('Failed to send Telegram message', await res.text());
+    }
+  } catch (err) {
+    console.error('Error sending Telegram message:', err);
   }
 }
 
