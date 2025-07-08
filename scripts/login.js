@@ -1,5 +1,5 @@
 const puppeteer = require('puppeteer');
-const fetch = require('node-fetch'); // Node 18+ 可用全局 fetch
+// const fetch = require('node-fetch'); // Node 18+ 可用全局 fetch
 
 async function login(username, password) {
   console.log(`Attempting to login with username: ${username}`);
